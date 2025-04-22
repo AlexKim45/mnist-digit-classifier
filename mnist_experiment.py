@@ -6,37 +6,32 @@ import matplotlib.pyplot as plt
 import random
 import time
 
-# Detect if running in Google Colab
 try:
     import google.colab
     running_on_colab = True
 except ImportError:
     running_on_colab = False
 
-# Use GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Constants
+
 MEAN = 0.1307
 STD_DEV = 0.3081
 NUM_EPOCHS = 8
 LEARNING_RATE = 0.02
 BATCH_SIZE = 128
-PRINT_EVERY = 1  # How often to print training loss
+PRINT_EVERY = 1  
 
-# Transform: Normalize to zero mean and unit variance
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(MEAN, STD_DEV)
 ])
 
-# Load datasets
 train_dataset = datasets.MNIST("MNIST_data", train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST("MNIST_data", train=False, download=True, transform=transform)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# Define the neural network
 class MNISTBasicNetwork(nn.Module):
     def __init__(self):
         super().__init__()
@@ -58,12 +53,10 @@ class MNISTBasicNetwork(nn.Module):
             logits = self.forward(x)
             return nn.functional.softmax(logits, dim=1)
 
-# Instantiate model, loss, and optimizer
 model = MNISTBasicNetwork().to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
-# Training loop
 start_time = time.time()
 for epoch in range(1, NUM_EPOCHS + 1):
     model.train()
@@ -73,11 +66,9 @@ for epoch in range(1, NUM_EPOCHS + 1):
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
 
-        # Forward pass
         logits = model(images)
         loss = loss_fn(logits, labels)
 
-        # Backward pass
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -93,7 +84,6 @@ for epoch in range(1, NUM_EPOCHS + 1):
 end_time = time.time()
 print(f"Training completed in {end_time - start_time:.2f} seconds")
 
-# Evaluation
 model.eval()
 correct = 0
 with torch.no_grad():
@@ -106,23 +96,19 @@ with torch.no_grad():
 accuracy = 100 * correct / len(test_loader.dataset)
 print(f"Test Accuracy: {accuracy:.2f}%")
 
-# Predict and display one random test image
 rand_idx = random.randint(0, len(test_dataset) - 1)
 image, true_label = test_dataset[rand_idx]
 image = image.to(device)
 
-# Predict with softmax
-probs = model.predict_with_softmax(image.unsqueeze(0))  # shape: [1, 10]
+probs = model.predict_with_softmax(image.unsqueeze(0)) 
 predicted_label = torch.argmax(probs, dim=1).item()
 
 print(f"\nActual Label: {true_label}")
 print(f"Model's Guess: {predicted_label}\n")
 
-# Print probabilities
 for digit, prob in enumerate(probs.squeeze().cpu().tolist()):
     print(f"{digit}: {prob * 100:.4f}%")
 
-# Display the image (unnormalized)
 unnormalized_img = image * STD_DEV + MEAN
 plt.imshow(unnormalized_img.squeeze(0).cpu(), cmap="gray")
 plt.title(f"Predicted: {predicted_label} | Actual: {true_label}")
