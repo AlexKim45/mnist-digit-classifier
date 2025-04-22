@@ -13,7 +13,7 @@ This project trains a neural network to classify handwritten digits using the MN
 Install dependencies:
 
 ```bash
-pip install torch torchvision numpy scipy
+pip3 install torch torchvision numpy scipy
 ```
 Run Interactive Number Classification: 
 ```bash
